@@ -12,6 +12,7 @@ import com.kal.rackmonthpicker.RackMonthPicker;
 import com.kal.rackmonthpicker.listener.DateMonthDialogListener;
 import com.kal.rackmonthpicker.listener.OnCancelMonthDialogListener;
 
+import java.util.Calendar;
 import java.util.Locale;
 
 public class MainActivity extends Activity {
@@ -21,25 +22,6 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final RackMonthPicker rackMonthPicker = new RackMonthPicker(this)
-                .setMonthType(MonthType.NUMBER)
-                .setPositiveButton(new DateMonthDialogListener() {
-                    @Override
-                    public void onDateMonth(int month, int startDate, int endDate, int year, String monthLabel) {
-                        System.out.println(month);
-                        System.out.println(startDate);
-                        System.out.println(endDate);
-                        System.out.println(year);
-                        System.out.println(monthLabel);
-                    }
-                })
-                .setMaxDate(System.currentTimeMillis())
-                .setNegativeButton(new OnCancelMonthDialogListener() {
-                    @Override
-                    public void onCancel(AlertDialog dialog) {
-                        dialog.dismiss();
-                    }
-                });
 //        new RackMonthPicker(this)
 //                .setPositiveButton(new DateMonthDialogListener() {
 //                    @Override
@@ -58,7 +40,24 @@ public class MainActivity extends Activity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                rackMonthPicker.show();
+
+                new RackMonthPicker(view.getContext())
+                        .setMaxDate(System.currentTimeMillis())
+                        .setSelectedYear(2019)
+                        .setSelectedMonth(10)
+                        .setLocale(Locale.CHINA)
+                        .setMonthType(MonthType.NUMBER)
+                        .setPositiveButton(new DateMonthDialogListener() {
+                            @Override
+                            public void onDateMonth(int month, int startDate, int endDate, int year, String monthLabel) {
+                            }
+                        })
+                        .setNegativeButton(new OnCancelMonthDialogListener() {
+                            @Override
+                            public void onCancel(AlertDialog dialog) {
+                                dialog.dismiss();
+                            }
+                        }).show();
             }
         });
     }

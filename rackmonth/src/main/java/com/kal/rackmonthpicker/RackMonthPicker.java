@@ -52,11 +52,12 @@ public class RackMonthPicker {
     public void show() {
         if (isBuild) {
             mAlertDialog.show();
-            builder.setDefault();
         } else {
             builder.build();
             isBuild = true;
         }
+
+        builder.onDateChanged();
     }
 
     /**
@@ -279,7 +280,6 @@ public class RackMonthPicker {
             cal.setTime(date);
             dateInfo.setYear(cal.get(Calendar.YEAR));
             dateInfo.setMonth(cal.get(Calendar.MONTH));
-            onDateChanged();
         }
 
         public void setLocale(Locale locale) {
@@ -288,17 +288,14 @@ public class RackMonthPicker {
 
         public void setSelectedMonth(int index) {
             dateInfo.setMonth(index);
-            onDateChanged();
         }
 
         public void setSelectedYear(int year) {
             dateInfo.setYear(year);
-            onDateChanged();
         }
 
         public void setMaxDate(long max) {
             dateInfo.setMaxDate(max);
-            onDateChanged();
         }
 
         public void setColorTheme(int color) {
@@ -354,7 +351,7 @@ public class RackMonthPicker {
             monthAdapter.setSelectedItem(dateInfo.getMonth());
             monthAdapter.notifyDataSetChanged();
 
-            mTitleView.setText(dateInfo.getYear() + "年" + monthAdapter.getShortMonth() + "月");
+            mTitleView.setText(dateInfo.getYear() + "-" + monthAdapter.getShortMonth());
             mYear.setText(dateInfo.getYear() + "");
         }
 
