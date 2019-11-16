@@ -4,11 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.ColorDrawable;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +12,10 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.kal.rackmonthpicker.listener.DateMonthDialogListener;
 import com.kal.rackmonthpicker.listener.OnCancelMonthDialogListener;
@@ -155,8 +154,71 @@ public class RackMonthPicker {
         return this;
     }
 
+    public RackMonthPicker setMaxDate(long max) {
+        builder.setMaxDate(max);
+        return this;
+    }
+
     public void dismiss() {
         mAlertDialog.dismiss();
+    }
+
+    static class DateInfo {
+        private int year;
+        private int month;
+        private long maxDate;
+
+        void setYear(int i) {
+            this.year = i;
+        }
+
+        void setMonth(int i) {
+            this.month = i;
+        }
+
+        void setMaxDate(long maxDate) {
+            this.maxDate = maxDate;
+        }
+
+        int getYear() {
+            return year;
+        }
+
+        int getMonth() {
+            return month;
+        }
+
+        int getMaxMonthOfThisYear() {
+            if (getLastDateOfThisYear() < this.maxDate) {
+                return 12;
+            }
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(0);
+
+            int month = 11;
+
+            while (month > 0) {
+                calendar.set(this.year, month, 1);
+                if (calendar.getTimeInMillis() > this.maxDate) {
+                    return month;
+                }
+                month--;
+            }
+
+            return 0;
+        }
+
+        long getLastDateOfThisYear() {
+            return getLastDateOfYear(this.year);
+        }
+
+        private long getLastDateOfYear(int year) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(0);
+            calendar.set(year + 1, 0, 1);
+            return calendar.getTimeInMillis() - 1;
+        }
     }
 
     private class Builder implements MonthAdapter.OnSelectedListener {
@@ -164,10 +226,12 @@ public class RackMonthPicker {
         private MonthAdapter monthAdapter;
         private TextView mTitleView;
         private TextView mYear;
-        private int year;
-        private int month;
+        private DateInfo dateInfo = new DateInfo();
         private AlertDialog.Builder alertBuilder;
         private View contentView;
+        private ImageView next;
+        private ImageView previous;
+
 
         private Builder() {
             alertBuilder = new AlertDialog.Builder(context);
@@ -179,10 +243,10 @@ public class RackMonthPicker {
             mTitleView = (TextView) contentView.findViewById(R.id.title);
             mYear = (TextView) contentView.findViewById(R.id.text_year);
 
-            ImageView next = (ImageView) contentView.findViewById(R.id.btn_next);
+            next = (ImageView) contentView.findViewById(R.id.btn_next);
             next.setOnClickListener(nextButtonClick());
 
-            ImageView previous = (ImageView) contentView.findViewById(R.id.btn_previous);
+            previous = (ImageView) contentView.findViewById(R.id.btn_previous);
             previous.setOnClickListener(previousButtonClick());
 
             mPositiveButton = (Button) contentView.findViewById(R.id.btn_p);
@@ -195,13 +259,10 @@ public class RackMonthPicker {
             recyclerView.setHasFixedSize(true);
             recyclerView.setAdapter(monthAdapter);
 
-            Date date = new Date();
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(date);
-            year = cal.get(Calendar.YEAR);
-            month = cal.get(Calendar.MONTH);
-
             setColorTheme(getColorByThemeAttr(context, android.R.attr.colorPrimary, R.color.color_primary));
+
+            // set default
+            setDefault();
         }
 
         private int getColorByThemeAttr(Context context, int attr, int defaultColor) {
@@ -216,13 +277,9 @@ public class RackMonthPicker {
             Date date = new Date();
             Calendar cal = Calendar.getInstance();
             cal.setTime(date);
-            year = cal.get(Calendar.YEAR);
-            month = cal.get(Calendar.MONTH);
-
-            monthAdapter.setSelectedItem(month);
-            mTitleView.setText(monthAdapter.getShortMonth() + ", " + year);
-            monthAdapter.notifyDataSetChanged();
-            mYear.setText(year + "");
+            dateInfo.setYear(cal.get(Calendar.YEAR));
+            dateInfo.setMonth(cal.get(Calendar.MONTH));
+            onDateChanged();
         }
 
         public void setLocale(Locale locale) {
@@ -230,14 +287,18 @@ public class RackMonthPicker {
         }
 
         public void setSelectedMonth(int index) {
-            monthAdapter.setSelectedItem(index);
-            mTitleView.setText(monthAdapter.getShortMonth() + ", " + year);
+            dateInfo.setMonth(index);
+            onDateChanged();
         }
 
         public void setSelectedYear(int year) {
-            this.year = year;
-            mYear.setText(year + "");
-            mTitleView.setText(monthAdapter.getShortMonth() + ", " + year);
+            dateInfo.setYear(year);
+            onDateChanged();
+        }
+
+        public void setMaxDate(long max) {
+            dateInfo.setMaxDate(max);
+            onDateChanged();
         }
 
         public void setColorTheme(int color) {
@@ -254,10 +315,6 @@ public class RackMonthPicker {
         }
 
         public void build() {
-            monthAdapter.setSelectedItem(month);
-            mTitleView.setText(monthAdapter.getShortMonth() + ", " + year);
-            mYear.setText(year + "");
-
             mAlertDialog = alertBuilder.create();
             mAlertDialog.show();
             mAlertDialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
@@ -272,9 +329,8 @@ public class RackMonthPicker {
             return new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    year++;
-                    mYear.setText(year + "");
-                    mTitleView.setText(monthAdapter.getShortMonth() + ", " + year);
+                    dateInfo.setYear(dateInfo.getYear() + 1);
+                    onDateChanged();
                 }
             };
         }
@@ -283,11 +339,23 @@ public class RackMonthPicker {
             return new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    year--;
-                    mYear.setText(year + "");
-                    mTitleView.setText(monthAdapter.getShortMonth() + ", " + year);
+                    dateInfo.setYear(dateInfo.getYear() - 1);
+                    onDateChanged();
                 }
             };
+        }
+
+        private void onDateChanged() {
+            long ts = dateInfo.getLastDateOfThisYear();
+            next.setEnabled(dateInfo.maxDate > ts);
+            next.setAlpha(dateInfo.maxDate > ts ? 1.0f : 0.2f);
+
+            monthAdapter.setSelectedItemMax(dateInfo.getMaxMonthOfThisYear());
+            monthAdapter.setSelectedItem(dateInfo.getMonth());
+            monthAdapter.notifyDataSetChanged();
+
+            mTitleView.setText(dateInfo.getYear() + "年" + monthAdapter.getShortMonth() + "月");
+            mYear.setText(dateInfo.getYear() + "");
         }
 
         public View.OnClickListener positiveButtonClick() {
@@ -298,7 +366,7 @@ public class RackMonthPicker {
                             monthAdapter.getMonth(),
                             monthAdapter.getStartDate(),
                             monthAdapter.getEndDate(),
-                            year, mTitleView.getText().toString());
+                            dateInfo.getYear(), mTitleView.getText().toString());
 
                     mAlertDialog.dismiss();
                 }
@@ -316,7 +384,8 @@ public class RackMonthPicker {
 
         @Override
         public void onContentSelected() {
-            mTitleView.setText(monthAdapter.getShortMonth() + ", " + year);
+            dateInfo.setMonth(monthAdapter.getMonthRaw());
+            onDateChanged();
         }
     }
 }

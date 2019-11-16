@@ -4,13 +4,14 @@ import android.content.Context;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.StateListDrawable;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.text.DateFormatSymbols;
 import java.util.Calendar;
@@ -24,6 +25,7 @@ public class MonthAdapter extends RecyclerView.Adapter<MonthAdapter.MonthHolder>
 
     private String[] months;
     private OnSelectedListener listener;
+    private int maxMonthOfThisYear;
     private int selectedItem = -1;
     private Context context;
     private int color;
@@ -38,8 +40,7 @@ public class MonthAdapter extends RecyclerView.Adapter<MonthAdapter.MonthHolder>
 
     @Override
     public MonthHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        MonthHolder monthHolder = new MonthHolder(LayoutInflater.from(context).inflate(R.layout.item_view_month, parent, false));
-        return monthHolder;
+        return new MonthHolder(LayoutInflater.from(context).inflate(R.layout.item_view_month, parent, false));
     }
 
     @Override
@@ -51,7 +52,9 @@ public class MonthAdapter extends RecyclerView.Adapter<MonthAdapter.MonthHolder>
         }
 
 //        holder.textViewMonth.setTextColor(selectedItem == position ? Color.WHITE : Color.BLACK);
-        holder.itemView.setSelected(selectedItem == position ? true : false);
+        holder.itemView.setSelected(selectedItem == position);
+        holder.itemView.setEnabled(position < maxMonthOfThisYear);
+        holder.itemView.setAlpha(position < maxMonthOfThisYear ? 1 : 0.2f);
     }
 
     @Override
@@ -93,6 +96,10 @@ public class MonthAdapter extends RecyclerView.Adapter<MonthAdapter.MonthHolder>
         return selectedItem + 1;
     }
 
+    public int getMonthRaw() {
+        return selectedItem;
+    }
+
     public int getStartDate() {
         return 1;
     }
@@ -111,6 +118,10 @@ public class MonthAdapter extends RecyclerView.Adapter<MonthAdapter.MonthHolder>
         } else {
             return months[selectedItem];
         }
+    }
+
+    public void setSelectedItemMax(int maxMonthOfThisYear) {
+        this.maxMonthOfThisYear = maxMonthOfThisYear;
     }
 
     class MonthHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
