@@ -33,6 +33,7 @@ public class MainActivity extends Activity {
                         System.out.println(monthLabel);
                     }
                 })
+                .setMaxDate(System.currentTimeMillis())
                 .setNegativeButton(new OnCancelMonthDialogListener() {
                     @Override
                     public void onCancel(AlertDialog dialog) {
