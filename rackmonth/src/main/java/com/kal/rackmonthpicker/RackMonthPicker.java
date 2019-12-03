@@ -197,7 +197,7 @@ public class RackMonthPicker {
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(0);
 
-            int month = 11;
+            int month = 12;
 
             while (month > 0) {
                 calendar.set(this.year, month, 1);

@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
                 new RackMonthPicker(view.getContext())
                         .setMaxDate(System.currentTimeMillis())
                         .setSelectedYear(2019)
-                        .setSelectedMonth(10)
+                        .setSelectedMonth(11)
                         .setLocale(Locale.CHINA)
                         .setMonthType(MonthType.NUMBER)
                         .setPositiveButton(new DateMonthDialogListener() {
